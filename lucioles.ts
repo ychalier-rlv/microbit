@@ -1,8 +1,8 @@
 //% color="#ff6e19" weight=1
 namespace luciole {
 
-    let _last = -1;
     let _period = 3000;
+    let _last = -1;
 
     //% block="définir la vitesse de l'horloge à $period ms"
     //% period.defl=3000
@@ -10,13 +10,14 @@ namespace luciole {
         radio.setGroup(1);
         radio.setTransmitPower(0);
         _period = period;
+        _last = -1 * Math.random() * _period;
     }
 
     //% block="lorsque l'horloge interne sonne 'midi'"
     export function onBlink(handler: () => void) {
         basic.forever(() => {
             let now = input.runningTime();
-            if (_last < 0 || now >= _last + _period) {
+            if (now >= _last + _period) {
                 _last = now;
                 radio.sendNumber(0);
                 handler();
@@ -27,17 +28,29 @@ namespace luciole {
     //% block="lorsqu'une luciole voisine clignote"
     export function onNeighborBlink(handler: () => void) {
         radio.onReceivedNumber(function(receivedNumber: number) {
-            let now = input.runningTime();
-            if (now - _last >= _period / 2) {
-                handler();
-            }
+            handler();
+            //let now = input.runningTime();
+            //if (now - _last >= _period / 2) {
+            //    handler();
+            //}
         });
     }
 
     //% block="avancer l'horloge interne de $ms ms"
     //% ms.defl=100
-    export function blinkSooner(ms: number) {
+    export function blinkSoonerConstant(ms: number) {
         _last -= ms;
+    }
+
+    //% block="avancer l'horloge interne d'un facteur $k"
+    //% k.defl=5
+    export function blinkSoonerLinear(k: number) {
+        let now = input.runningTime();
+        let clock = (k + 1) * (now - _last) / _period;
+        if (clock > 1) {
+            clock = 1;
+        }
+        _last = now - clock * _period;
     }
 
 }
